@@ -12,7 +12,7 @@ class AuthController {
 				{ email, _id },
 				process.env.JWT_ACCESS_KEY,
 				{
-					expiresIn: '10m',
+					expiresIn: '1m',
 				},
 			)
 			const refreshToken = jwt.sign(
@@ -51,21 +51,30 @@ class AuthController {
 		}
 	}
 
-	async validateToken(token, type = 'refresh') {
+	async validateAccessToken(token) {
 		try {
-			const userData = jwt.verify(
-				token,
-				type === 'access' ? process.env.JWT_ACCESS_KEY : process.env.JWT_REFRESH_KEY,
-			)
+			const userData = jwt.verify(token, process.env.JWT_ACCESS_KEY)
+			if (!userData) {
+				throw RestError.UnauthorizedError('User is not authorized')
+			}
+			return userData
+		} catch (err) {
+			next(err)
+		}
+	}
+
+	async validateRefreshToken(token) {
+		try {
+			const userData = jwt.verify(token, process.env.JWT_REFRESH_KEY)
 			const isTokenExit = await tokenModel.findOne({
-				refreshToken
+				refreshToken: token,
 			})
 			if (!userData || !isTokenExit) {
 				throw RestError.UnauthorizedError('User is not authorized')
 			}
 			return userData
 		} catch (err) {
-			next(err) // check
+			next(err)
 		}
 	}
 
@@ -98,45 +107,54 @@ class AuthController {
 			const { email, password } = req.body
 			const foundUser = await UsersModel.findOne({ email })
 			if (!foundUser) {
-				throw RestError.BadRequest('No registered user with this email') // check
+				throw RestError.BadRequest('No registered user with this email')
 			}
-			const isPassCorrect = bcrypt.compare(password, foundUser.password)
+			const isPassCorrect = await bcrypt.compare(
+				password,
+				foundUser.password,
+			)
 			if (!isPassCorrect) {
-				throw RestError.BadRequest('Wrong password') // check
+				throw RestError.BadRequest('Wrong password')
 			}
 			res.data = foundUser // check
-			res.statusCode = 201 // check
+			res.statusCode = 201
+
+			next()
 		} catch (err) {
 			next(err)
 		}
 	}
 	async logout(req, res, next) {
 		try {
-			const {refreshToken} = req.cookies
-			const deletedToken = await tokenModel.deleteOne({
-				refreshToken
+			const { refreshToken } = req.cookies
+			const deleted = await tokenModel.deleteOne({
+				refreshToken,
 			})
-			if (!deletedToken) {
+			if (deleted.deletedCount === 0) {
 				throw RestError.BadRequest('Could not delete token')
 			}
 
 			res.clearCookie('refreshToken')
 			res.statusCode = 200
 
+			next()
 		} catch (err) {
 			next(err)
 		}
 	}
 	async refresh(req, res, next) {
 		try {
-			const {refreshToken} = req.cookies
+			const { refreshToken } = req.cookies
 			if (!refreshToken) {
 				throw RestError.UnauthorizedError('User is not authorized')
 			}
-			const userData = await this.validateToken(token, 'refresh') // check
-			const refreshedUserData = await UsersModel.findById(userData._id) // check
+			const AC = new AuthController()
+			const userData = await AC.validateRefreshToken(refreshToken)
+			const refreshedUserData = await UsersModel.findById(userData._id)
 
-			res.data = refreshedUserData // check
+			res.data = refreshedUserData
+
+			next()
 		} catch (err) {
 			next(err)
 		}
