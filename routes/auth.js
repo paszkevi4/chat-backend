@@ -10,8 +10,18 @@ route.post(
 	AuthController.generateTokens,
 	Common.sendResponse,
 )
-route.post('/login', AuthController.login, Common.sendResponse)
+route.post(
+	'/login', 
+	AuthController.login, 
+	AuthController.generateTokens, 
+	Common.sendResponse
+)
 route.post('/logout', AuthController.logout, Common.sendResponse)
-route.get('/refresh', AuthController.refresh, Common.sendResponse)
+route.get(
+	'/refresh', 
+	AuthController.refresh, 
+	AuthController.generateTokens,
+	Common.sendResponse, 
+)
 
 module.exports = route

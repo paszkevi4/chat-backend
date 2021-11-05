@@ -1,8 +1,9 @@
 const express = require('express')
-const Common = require('../controllers/users')
+const UsersController = require('../controllers/users')
+const Common = require ('../common/sendResponse')
 
 const route = express.Router()
 
-route.get('/', Common.getUsers)
+route.get('/', Common.checkIsAuth, UsersController.getUsers) // check 30s 72m
 
 module.exports = route
