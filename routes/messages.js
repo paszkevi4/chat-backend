@@ -1,20 +1,13 @@
 const express = require('express')
-const UsersController = require('../controllers/users')
+const MessagesController = require('../controllers/messages')
 const Common = require('../common/sendResponse')
 
 const route = express.Router()
 
-route.get(
+route.post(
 	'/',
 	Common.checkIsAuth,
-	UsersController.getUsers,
-	Common.sendResponse,
-)
-
-route.get(
-	'/user/:id',
-	Common.checkIsAuth,
-	UsersController.getUser,
+	MessagesController.createNewMessage,
 	Common.sendResponse,
 )
 

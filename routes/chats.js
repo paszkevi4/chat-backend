@@ -1,20 +1,20 @@
 const express = require('express')
-const UsersController = require('../controllers/users')
+const ChatsController = require('../controllers/chats')
 const Common = require('../common/sendResponse')
 
 const route = express.Router()
 
-route.get(
+route.post(
 	'/',
 	Common.checkIsAuth,
-	UsersController.getUsers,
+	ChatsController.createNewChat,
 	Common.sendResponse,
 )
 
 route.get(
-	'/user/:id',
+	'/mychats',
 	Common.checkIsAuth,
-	UsersController.getUser,
+	ChatsController.getMyChats,
 	Common.sendResponse,
 )
 

@@ -6,6 +6,8 @@ const mongoose = require('mongoose')
 
 const authRouter = require('./routes/auth')
 const usersRouter = require('./routes/users')
+const chatsRouter = require('./routes/chats')
+const messagesRouter = require('./routes/messages')
 const RestError = require('./common/restError')
 
 const PORT = process.env.PORT || 5000
@@ -13,10 +15,17 @@ const PORT = process.env.PORT || 5000
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors())
+app.use(
+	cors({
+		credentials: true,
+		origin: process.env.CLIENT_URL,
+	}),
+)
 
 app.use('/auth', authRouter)
 app.use('/users', usersRouter)
+app.use('/chats', chatsRouter)
+app.use('/messages', messagesRouter)
 
 // error handler
 app.use((err, req, res, next) => {
